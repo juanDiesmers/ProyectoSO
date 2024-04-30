@@ -9,7 +9,7 @@ sensor: main_sensor.c common.h
 
 # Target for monitor executable
 monitor: main_monitor.c common.h
-	$(CC) $(CFLAGS) main_monitor.c -o monitor
+	$(CC) $(CFLAGS) main_monitorTest.c -o monitor
 
 # Clean up the build
 clean:
