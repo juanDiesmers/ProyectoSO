@@ -6,7 +6,6 @@ Este sistema simula el monitoreo de parámetros ambientales como la temperatura 
 
 - `main_monitorTest.c`: Contiene la lógica del monitor que recibe y procesa los datos.
 - `main_sensor.c`: Simula los sensores enviando datos al monitor.
-- `common.h`: Define estructuras y constantes compartidas entre el monitor y los sensores.
 
 ## Descripción de los Componentes
 
@@ -16,8 +15,6 @@ El monitor maneja la recepción de datos de los sensores. Utiliza múltiples hil
 ### main_sensor.c
 El sensor envía datos simulados de temperatura o pH al monitor a través de un pipe. Puede ser configurado para enviar datos a diferentes intervalos.
 
-### common.h
-Contiene definiciones de estructuras y constantes que son utilizadas por ambos, el sensor y el monitor, facilitando la interoperabilidad y el mantenimiento del código.
 
 ## Compilación y Ejecución
 
@@ -26,21 +23,20 @@ Contiene definiciones de estructuras y constantes que son utilizadas por ambos, 
 Utiliza el siguiente comando para compilar el monitor y el sensor. Asegúrate de estar en el directorio que contiene los archivos fuente.
 
 ```bash
-gcc -o monitorTest main_monitorTest.c -pthread
-gcc -o sensor main_sensor.c -pthread
+make all
 ```
 
 ## Ejecucion
 1. Ejecutar el monitor primero para asegurar que el pipe está disponible:
 ```bash
-./monitorTest
+./Monitor -b [tam_buffer] -t [file_temp] -h [file_ph] -p [pipe_nominal]
 ```
 2. Ejecutar el sensor
 ./monitorTest
 ```bash
-./sensor -s [tipo_sensor] -t [intervalo] -f [archivo_datos] -p sensorPipe
+./Sensor -s [tipo_sensor] -t [tiempo] -f [archivo] -p [pipe_nominal]
 ```
-Reemplaza [tipo_sensor] (1 para temperatura, 2 para pH), [intervalo] (en segundos), [archivo_datos] (path al archivo de datos), y sensorPipe es el nombre del pipe.
+Reemplaza [tipo_sensor] (1 para temperatura, 2 para pH), [tirmpo] (en segundos), [archivo] (path al archivo de datos), y [pipe_nominal] es el nombre del pipe.
 
 ## Notas Adicionales
 
