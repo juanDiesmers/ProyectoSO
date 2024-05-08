@@ -1,102 +1,113 @@
-// main_monitorTest.c
-#include "common.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
 #include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <stdbool.h>
+#include <string.h>
 
-// Estructura para los buffers
-SensorData phBuffer[BUFFER_SIZE];
-SensorData tempBuffer[BUFFER_SIZE];
-int phIndex = 0;
-int tempIndex = 0;
+#define BUFFER_SIZE 256
+#define MAX_MEASUREMENTS 100
 
-// locks para los buffers
-pthread_mutex_t phMutex = PTHREAD_MUTEX_INITIALIZER;
+typedef struct {
+    double measurements[MAX_MEASUREMENTS];
+    int count;
+} MeasurementBuffer;
+
+MeasurementBuffer tempBuffer, phBuffer;
 pthread_mutex_t tempMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t phMutex = PTHREAD_MUTEX_INITIALIZER;
 
-// Condicion de terminacion
-bool running = true;
-
-// Hilo recolector
-void* recolector(void* arg) {
-    int pipe_fd = *(int*)arg;
-    SensorData data;
-
-    while (running) {
-        if(read(pipe_fd, &data, sizeof(data) > 0)) {
-            if(data.value < 0) continue; // Descartar valores negativos
-
-            // Clasificar los datos en los buffers
-            if (data.type == SENSOR_TEMP) { // Temperatura
-                pthread_mutex_lock(&tempMutex);
-                if(tempIndex < BUFFER_SIZE) {
-                    tempBuffer[tempIndex++] = data;
-                }
-                pthread_mutex_unlock(&tempMutex);
-            } else if (data.type == SENSOR_PH) { // PH
-                pthread_mutex_lock(&phMutex);
-                if(phIndex < BUFFER_SIZE) {
-                    phBuffer[phIndex++] = data;
-                }
-                pthread_mutex_unlock(&phMutex);
-            } 
-        } else {
-            running = false; // Terminar si no hay mas datos
-        }
-    }
-    pthread_exit(NULL);
-}
-
-// Hilo para PH
-void* phHandler(void* arg) {
-    while (running || phIndex > 0) {
-        pthread_mutex_lock(&phMutex);
-        if(phIndex > 0) {
-            SensorData data = phBuffer[--phIndex];
-            printf("PH: %f\n", data.value);
-        }
-        pthread_mutex_unlock(&phMutex);
-    }
-    pthread_exit(NULL);
-}
-
-// Hilo para temperatura
-void* tempHandler(void* arg) {
-    while (running || tempIndex > 0) {
+void* temp_handler(void *arg) {
+    while (1) {
         pthread_mutex_lock(&tempMutex);
-        if(tempIndex > 0) {
-            SensorData data = tempBuffer[--tempIndex];
-            printf("Temperatura: %f\n", data.value);
+        if (tempBuffer.count > 0) {
+            double temp = tempBuffer.measurements[--tempBuffer.count];
+            pthread_mutex_unlock(&tempMutex);
+
+            // Registrar la temperatura
+            printf("Temperatura registrada: %f°C\n", temp);
+            FILE *f = fopen("archivo_temperaturasTomadas.txt", "a");
+            if (f) {
+                fprintf(f, "%f°C\n", temp);
+                fclose(f);
+            }
+
+            // Verificar si la temperatura está fuera del rango
+            if (temp < 20.0 || temp > 31.6) {
+                printf("Alerta: Temperatura fuera de rango: %f°C\n", temp);
+                // Aquí puedes añadir más acciones, como registrar esta alerta en un archivo específico
+            }
+
+            sleep(1); // Simular procesamiento
+        } else {
+            pthread_mutex_unlock(&tempMutex);
         }
-        pthread_mutex_unlock(&tempMutex);
     }
-    pthread_exit(NULL);
+    return NULL;
+}
+void* ph_handler(void *arg) {
+    while (1) {
+        pthread_mutex_lock(&phMutex);
+        if (phBuffer.count > 0) {
+            double ph = phBuffer.measurements[--phBuffer.count];
+            pthread_mutex_unlock(&phMutex);
+
+            // Registrar el pH
+            printf("pH registrado: %f\n", ph);
+            FILE *f = fopen("archivo_phTomados.txt", "a");
+            if (f) {
+                fprintf(f, "%f\n", ph);
+                fclose(f);
+            }
+
+            // Verificar si el pH está fuera del rango
+            if (ph < 6.0 || ph > 8.0) {
+                printf("Alerta: pH fuera de rango: %f\n", ph);
+                // Aquí puedes añadir más acciones, como registrar esta alerta en un archivo específico
+            }
+
+            sleep(1); // Simular procesamiento
+        } else {
+            pthread_mutex_unlock(&phMutex);
+        }
+    }
+    return NULL;
 }
 
-int main() {
-    pthread_t recolectorThread, phThread, tempThread;
-    int pipe_fd;
-    char *pipeName = "sensorPipe";
+int main(int argc, char *argv[]) {
+    if (argc != 9) {
+        fprintf(stderr, "Uso: %s -b [tam_buffer] -t [file_temp] -h [file_ph] -p [pipe_nominal]\n", argv[0]);
+        return 1;
+    }
 
-    // Crear el hilo si no existe
-    mkfifo(pipeName, 0666);
-    pipe_fd = open(pipeName, O_RDONLY);
+    char *pipeName = argv[8];
+    int fd = open(pipeName, O_RDONLY);
+    if (fd == -1) {
+        perror("Error al abrir el pipe");
+        return 1;
+    }
 
-    // Crear los hilos
-    pthread_create(&recolectorThread, NULL, recolector, &pipe_fd);
-    pthread_create(&phThread, NULL, phHandler, NULL);
-    pthread_create(&tempThread, NULL, tempHandler, NULL);
+    pthread_t tempThread, phThread;
+    pthread_create(&tempThread, NULL, temp_handler, NULL);
+    pthread_create(&phThread, NULL, ph_handler, NULL);
 
-    // Esperar a que terminen los hilos
-    pthread_join(recolectorThread, NULL);
-    pthread_join(phThread, NULL);
+    double value;
+    while (read(fd, &value, sizeof(value)) > 0) {
+        printf("Recibido valor: %f\n", value);
+        if (value > 30) {  // Ejemplo: valor arbitrario como límite para temperatura
+            pthread_mutex_lock(&tempMutex);
+            tempBuffer.measurements[tempBuffer.count++] = value;
+            pthread_mutex_unlock(&tempMutex);
+        } else {
+            pthread_mutex_lock(&phMutex);
+            phBuffer.measurements[phBuffer.count++] = value;
+            pthread_mutex_unlock(&phMutex);
+        }
+    }
+
+    close(fd);
     pthread_join(tempThread, NULL);
-
-    // Cerrar y eliminar el pipe
-    close(pipe_fd);
-    unlink(pipeName);
+    pthread_join(phThread, NULL);
 
     return 0;
 }
