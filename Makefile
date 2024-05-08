@@ -1,19 +1,30 @@
-# Define compiler
 CC=gcc
-# Define flags
-CFLAGS=-Wall -pthread
+CFLAGS=-Wall -g
+LDFLAGS=-pthread
 
-# Target for sensor executable
-sensor: main_sensor.c common.h
-	$(CC) $(CFLAGS) main_sensor.c -o sensor
+# Nombres de los ejecutables
+SENSOR_EXEC=Sensor
+MONITOR_EXEC=Monitor
 
-# Target for monitor executable
-monitor: main_monitor.c common.h
-	$(CC) $(CFLAGS) main_monitorTest.c -o monitor
+# Fuentes y objetos
+SENSOR_SRC=main_sensor.c
+SENSOR_OBJ=$(SENSOR_SRC:.c=.o)
 
-# Clean up the build
+MONITOR_SRC=main_monitorTest.c
+MONITOR_OBJ=$(MONITOR_SRC:.c=.o)
+
+all: $(SENSOR_EXEC) $(MONITOR_EXEC)
+
+$(SENSOR_EXEC): $(SENSOR_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(MONITOR_EXEC): $(MONITOR_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $<
+
 clean:
-	rm -f sensor monitor
+	rm -f $(SENSOR_EXEC) $(MONITOR_EXEC) *.o
 
-# All targets
-all: sensor monitor
+.PHONY: all clean
