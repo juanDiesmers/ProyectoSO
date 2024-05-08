@@ -32,17 +32,24 @@ make all
 ./Monitor -b [tam_buffer] -t [file_temp] -h [file_ph] -p [pipe_nominal]
 ```
 -b [tam_buffer]: Este argumento especifica el tamaño del buffer que se usará para almacenar temporalmente las mediciones antes de procesarlas. Un buffer es necesario para manejar las variaciones en la tasa de llegada de datos y para asegurar que el sistema pueda manejar ráfagas de datos entrantes sin perder información.
+
 -t [file_temp]: Indica el nombre del archivo donde se guardarán las mediciones de temperatura. Este archivo es utilizado por el hilo de manejo de la temperatura para registrar todas las mediciones válidas que se reciben, lo cual es crucial para la auditoría y análisis posterior.
+
 -h [file_ph]: Similar al archivo de temperatura, este es el nombre del archivo donde se guardarán las mediciones de pH. Permite que el sistema mantenga un registro detallado de todas las mediciones de pH para su análisis posterior.
+
 -p [pipe_nominal]: Especifica el nombre del pipe nominal que se utiliza para la comunicación entre los sensores y el monitor. Los pipes nominales son una forma de IPC (Inter-process Communication) que permite a los procesos independientes compartir datos de manera eficiente.
+
 2. Ejecutar el sensor
 ./monitorTest
 ```bash
 ./Sensor -s [tipo_sensor] -t [tiempo] -f [archivo] -p [pipe_nominal]
 ```
 -s [tipo_sensor]: Este argumento define el tipo de sensor que se está simulando. Por ejemplo, -s 1 podría indicar un sensor de temperatura, mientras que -s 2 podría indicar un sensor de pH. Esto permite que el mismo ejecutable del sensor se use para simular diferentes tipos de sensores simplemente cambiando este parámetro.
+
 -t [tiempo]: Define el intervalo de tiempo en segundos entre cada envío de datos del sensor al monitor. Este parámetro es crucial para controlar la frecuencia de muestreo y transmisión de datos, afectando directamente la carga del sistema y la resolución temporal de las mediciones.
+
 -f [archivo]: Especifica el nombre del archivo del que el sensor leerá las mediciones. Este archivo debe contener los datos que el sensor "simula" como si estuvieran siendo medidos en tiempo real, permitiendo una fácil adaptación del sistema para probar diferentes conjuntos de datos.
+
 -p [pipe_nominal]: Al igual que en el comando del monitor, este argumento indica el nombre del pipe que el sensor utilizará para enviar datos al monitor. Es esencial que este nombre coincida con el especificado en el monitor para que la comunicación entre los procesos funcione correctamente.
 
 ## Notas Adicionales
