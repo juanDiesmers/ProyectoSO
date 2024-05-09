@@ -35,7 +35,7 @@ void* temp_handler(void *arg) {
             // Verificar si la temperatura está fuera del rango
             if (temp < 20.0 || temp > 31.6) {
                 printf("Alerta: Temperatura fuera de rango: %f°C\n", temp);
-                // Aquí puedes añadir más acciones, como registrar esta alerta en un archivo específico
+                
             }
 
             sleep(1); // Simular procesamiento
@@ -63,7 +63,7 @@ void* ph_handler(void *arg) {
             // Verificar si el pH está fuera del rango
             if (ph < 6.0 || ph > 8.0) {
                 printf("Alerta: pH fuera de rango: %f\n", ph);
-                // Aquí puedes añadir más acciones, como registrar esta alerta en un archivo específico
+                
             }
 
             sleep(1); // Simular procesamiento
@@ -94,15 +94,15 @@ int main(int argc, char *argv[]) {
     double value;
     while (read(fd, &value, sizeof(value)) > 0) {
         printf("Recibido valor: %f\n", value);
-        if (value > 30) {  // Ejemplo: valor arbitrario como límite para temperatura
+        if (value < 20 || value > 40) { 
             pthread_mutex_lock(&tempMutex);
             tempBuffer.measurements[tempBuffer.count++] = value;
             pthread_mutex_unlock(&tempMutex);
-        } else {
+        } else if (value < 6 || value > 15) {
             pthread_mutex_lock(&phMutex);
             phBuffer.measurements[phBuffer.count++] = value;
             pthread_mutex_unlock(&phMutex);
-        }
+        } 
     }
 
     close(fd);
