@@ -67,6 +67,8 @@ make all
 
 Este proyecto muestra el funcionamiento de un sistema de monitoreo de sensores en tiempo real.
 
+## Vista previa
+![Vista previa](2024-05-2302-43-00-ezgif.com-video-to-gif-converter.gif)
 ## Demostración en Video
 
 [![Ver Video](https://img.youtube.com/vi/tu_video_id/0.jpg)](https://youtu.be/cIl5wHBAFZE)
