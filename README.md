@@ -90,8 +90,8 @@ Haga clic en la imagen de arriba para ver el video completo en YouTube.
 
 ```sh
 # Clonar el repositorio
-git clone https://github.com/tu_usuario/tu_repositorio.git
-cd tu_repositorio
+[git clone https://github.com/tu_usuario/tu_repositorio.git](https://github.com/juanDiesmers/ProyectoSO.git)
+cd ProyectoSO
 
 # Compilar y ejecutar el monitor
 gcc -o monitorW.exe main_monitorW.c -lws2_32
