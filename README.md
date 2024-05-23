@@ -61,3 +61,44 @@ make all
 
 - **Pipe no encontrado**: Este error ocurre si intentas iniciar los sensores antes de que el monitor esté activo. Asegúrate de que el monitor esté ejecutando antes de iniciar cualquier sensor para establecer el pipe necesario para la comunicación.
 - **Datos no recibidos**: Si los datos no están siendo correctamente recibidos por el monitor, verifica que los nombres de los pipes y los archivos de datos sean consistentes y correctos en ambos programas. Además, asegúrate de que el formato y la integridad de los datos en los archivos de datos cumplan con lo esperado por el programa sensor.
+
+# Compilacion y Ejecucion en Windows
+# Proyecto de Monitoreo de Sensores
+
+Este proyecto muestra el funcionamiento de un sistema de monitoreo de sensores en tiempo real.
+
+## Demostración en Video
+
+[![Ver Video](https://img.youtube.com/vi/tu_video_id/0.jpg)](https://youtu.be/cIl5wHBAFZE)
+
+Haga clic en la imagen de arriba para ver el video completo en YouTube.
+
+## Funcionalidades
+
+- Monitoreo de temperatura y pH.
+- Alerta en tiempo real cuando los valores están fuera de los límites establecidos.
+- Visualización en tiempo real de los datos del sensor.
+
+## Instrucciones de Uso
+
+1. Clona el repositorio.
+2. Compila y ejecuta el monitor.
+3. Compila y ejecuta los sensores.
+4. Ejecuta el script de visualización en Python.
+
+```sh
+# Clonar el repositorio
+git clone https://github.com/tu_usuario/tu_repositorio.git
+cd tu_repositorio
+
+# Compilar y ejecutar el monitor
+gcc -o monitorW.exe main_monitorW.c -lws2_32
+./monitorW.exe
+
+# Compilar y ejecutar el sensor
+gcc -o SensorW.exe main_sensorW.c -lws2_32
+./SensorW.exe -s 1 -t 1 -p \\.\pipe\MyPipe
+
+# Ejecutar el script de visualización
+python read.py
+

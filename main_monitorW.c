@@ -16,6 +16,7 @@ typedef struct {
 #define TEMP_MAX 31.6
 #define PH_MIN 6.0
 #define PH_MAX 8.0
+#define STOP_SIGNAL -1.0
 
 unsigned __stdcall session_thread(void *data) {
     HANDLE hPipe = (HANDLE)data;
@@ -23,6 +24,10 @@ unsigned __stdcall session_thread(void *data) {
     SensorData sensorData;
 
     while (ReadFile(hPipe, &sensorData, sizeof(sensorData), &bytesRead, NULL) && bytesRead > 0) {
+        if (sensorData.value == STOP_SIGNAL) {
+            printf("Received stop signal. Terminating session.\n");
+            break;
+        }
         FILE *file;
         FILE *alertFile;
         if (sensorData.type == 1) {
@@ -95,6 +100,15 @@ int main() {
         } else {
             CloseHandle(hPipe);
         }
+    }
+
+    // Send stop signal to sensors before exiting
+    HANDLE hPipeWrite = CreateFile(PIPE_NAME, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (hPipeWrite != INVALID_HANDLE_VALUE) {
+        SensorData stopSignal = {0, STOP_SIGNAL};
+        DWORD bytesWritten;
+        WriteFile(hPipeWrite, &stopSignal, sizeof(stopSignal), &bytesWritten, NULL);
+        CloseHandle(hPipeWrite);
     }
 
     return 0;

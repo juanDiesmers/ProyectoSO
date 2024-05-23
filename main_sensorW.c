@@ -5,8 +5,10 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
+#include <windows.h>
 
 #define BUFFER_SIZE 256
+#define STOP_SIGNAL -1.0
 
 typedef struct {
     int type;   // 1 para temperatura, 2 para pH
@@ -42,9 +44,17 @@ int main(int argc, char *argv[]) {
 
     srand(time(NULL));  // Seed the random number generator
 
-    int fd = open(pipeName, O_WRONLY);
-    if (fd == -1) {
-        perror("Error al abrir el pipe");
+    HANDLE hPipe = CreateFile(
+        pipeName,          // pipe name
+        GENERIC_WRITE,     // write access
+        0,                 // no sharing
+        NULL,              // default security attributes
+        OPEN_EXISTING,     // opens existing pipe
+        0,                 // default attributes
+        NULL);             // no template file
+
+    if (hPipe == INVALID_HANDLE_VALUE) {
+        fprintf(stderr, "Error al abrir el pipe. Código de error: %lu\n", GetLastError());
         return 1;
     }
 
@@ -53,11 +63,26 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         generate_data(&data);
-        write(fd, &data, sizeof(data));
+        DWORD bytesWritten;
+        if (!WriteFile(hPipe, &data, sizeof(data), &bytesWritten, NULL)) {
+            fprintf(stderr, "Error al escribir en el pipe. Código de error: %lu\n", GetLastError());
+            break;
+        }
         printf("Enviando valor: %f al pipe\n", data.value);
-        sleep(interval);
+        Sleep(interval * 1000);
+
+        // Verificar si hay una señal de parada en el pipe
+        DWORD bytesAvailable;
+        if (PeekNamedPipe(hPipe, NULL, 0, NULL, &bytesAvailable, NULL) && bytesAvailable >= sizeof(SensorData)) {
+            SensorData stopCheck;
+            DWORD bytesRead;
+            if (ReadFile(hPipe, &stopCheck, sizeof(stopCheck), &bytesRead, NULL) && bytesRead > 0 && stopCheck.value == STOP_SIGNAL) {
+                printf("Received stop signal. Terminating sensor.\n");
+                break;
+            }
+        }
     }
 
-    close(fd);
+    CloseHandle(hPipe);
     return 0;
 }
