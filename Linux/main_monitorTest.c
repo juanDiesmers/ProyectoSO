@@ -1,3 +1,8 @@
+// main_monitor.c
+// author:  Juan Diego Palacios Toledo
+// fecha: 29/04/2024
+// tema: Monitor
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
